@@ -341,13 +341,13 @@
           texto: `
 Jugador, entrás a SOCIABILIZAR.
 
-Hoy es el primer día de liceo.
+Hoy es el primer día de liceo!
 
 La idea es simple:
 tomás decisiones, gastás batería social, conseguís objetos y desbloqueás distintos finales.
 
-Podés hablar con tu amiga, conocer a Luna, comprar algo en la cantina,
-ir al rincón tranquilo o entrar directo a clase.
+Podés hablar con tu amiga, conocer mejor a una chica llamada Luna,
+comprar algo en la cantina, ir al rincón tranquilo o entrar directo a clase.
 
 No hay una sola forma de jugar.
 Cada ruta puede terminar distinto.
@@ -371,10 +371,11 @@ Cada ruta puede terminar distinto.
 Aparece la creadora.
 
 Está con capucha negra, tapaboca y lentes oscuros.
-Habla bajito, como si estuviera explicando algo importante, pero sin hacer mucho show.
+Despues de todo ella es la creadora, debe tener algo de misterio 😎
+Va a explicarte algo importante, asi que presta atencion!
 
 Creadora:
-"Tu batería social empieza en 30."
+"Tu batería social empieza en 30 puntos."
 
 "Cada decisión suele gastar 1 punto."
 
@@ -382,9 +383,9 @@ Creadora:
 
 "También podés conseguir objetos."
 
-"Algunos objetos abren opciones nuevas."
+"Y lgunos objetos abren opciones nuevas."
 
-"Elegí lo que te parezca más divertido."
+"Te recomiendo que elijas lo que te parezca más divertido."
 
 "Y si sale mal, reiniciás y probás otra ruta."
 `,
@@ -429,7 +430,7 @@ Tu amiga te mandó un mensaje:
 
 La mochila está en una silla.
 El uniforme está cerca.
-El celular sigue vibrando.
+Y tu celular sigue vibrando.
 `;
           },
           opciones: [
@@ -472,8 +473,8 @@ Revisás el celular.
 Tenés tres cosas nuevas:
 
 1. Un mensaje de tu amiga.
-2. Muchos mensajes en el grupo de clase.
-3. Una historia de una compañera nueva mostrando una mochila con sticker de rana.
+2. Muchos mensajes en el grupo de la clase.
+3. Una historia de una compañera nueva mostrando una mochila con sticker de rana?
 
 Todavía no conocés a la compañera de la rana,
 pero capaz va a tu clase.
@@ -598,6 +599,8 @@ Elegir bien puede servir después.
 Ahora toca elegir qué ponerte.
 
 Querés sentir comodidad, pero también sentir que empezás bien el día.
+
+Las primeras impreciones son importantes.
 `,
           opciones: [
             {
@@ -628,7 +631,7 @@ Querés sentir comodidad, pero también sentir que empezás bien el día.
               }
             },
             {
-              texto: "Ponerte capucha como la creadora.",
+              texto: "Ponerte capucha como la creadora😎.",
               ir: "CAMINO",
               accion: function () {
                 estado.outfit = "capucha";
@@ -819,8 +822,9 @@ Está sentada con tres personas que no conocés.
 
 Ella corre un poco la silla y te deja espacio.
 
-No te obliga a hablar enseguida.
-Te acompaña con una sonrisa y sigue la conversación para que puedas sumarte cuando quieras.
+Ella sigue su converzacion de antes tranquilamente.
+
+Aunque te hace gesto para que te sumes a la charla.
 `,
           opciones: [
             {
@@ -1040,7 +1044,7 @@ Parece simpática, aunque está un poco apurada buscando.
               accion: function () {
                 estado.luna += 2;
                 estado.valentia += 1;
-                mostrarAviso("Luna dice que es verde, chiquito y tiene una coronita dorada.");
+                mostrarAviso("Ella dice que es verde, chiquito y tiene una coronita dorada.");
               }
             },
             {
@@ -1076,7 +1080,7 @@ Parece simpática, aunque está un poco apurada buscando.
 
         LUNA_BUSCAR: {
           texto: `
-Ayudás a Luna a buscar.
+Ayudás a la chica a buscar.
 
 Miran debajo de una silla.
 Después debajo de la mesa.
@@ -1085,7 +1089,7 @@ Finalmente ves algo verde cerca de la pata de un banco.
 
 Es el llavero de rana.
 
-Luna sonríe aliviada.
+Ella sonríe aliviada.
 
 "¡Gracias! Me lo regaló mi primo antes de empezar las clases."
 `,
@@ -1126,7 +1130,7 @@ Luna sonríe aliviada.
               accion: function () {
                 estado.luna += 2;
                 estado.calma += 1;
-                mostrarAviso("Luna dice que capaz conviene llevarla a objetos perdidos.");
+                mostrarAviso("Ella dice que capaz conviene llevarla a objetos perdidos.");
               }
             }
           ]
@@ -1140,7 +1144,7 @@ Desde ahí podés ver el patio sin estar en el medio.
 
 Tu amiga sigue en la mesa.
 La cantina sigue con fila.
-Luna sigue buscando algo cerca de la ventana.
+Y la chica del sticker de rana sigue buscando algo cerca de la ventana.
 
 También ves algo brillante debajo de un banco.
 `,
@@ -1204,7 +1208,7 @@ Capaz alguien la está buscando.
               }
             },
             {
-              texto: "Preguntarle a Luna si sabe de quién es.",
+              texto: "Preguntarle a la chica del sticker de rana si sabe de quién es.",
               ir: "LUNA",
               accion: function () {
                 agregarObjeto("pulsera vieja");
@@ -1232,7 +1236,7 @@ El recreo sigue.
 ${comentario}
 
 Tu amiga está cerca.
-Luna también anda por ahí.
+La chica del sticker de rana también anda por ahí.
 La cantina sigue abierta.
 El rincón tranquilo sigue disponible.
 `;
@@ -1243,7 +1247,7 @@ El rincón tranquilo sigue disponible.
               ir: "AMIGA"
             },
             {
-              texto: "Acercarte a Luna.",
+              texto: "Acercarte a la chica del sticker de rana.",
               ir: "LUNA"
             },
             {
@@ -1366,7 +1370,7 @@ Tu turno se acerca.
               }
             },
             {
-              texto: "Pedirle una lapicera prestada a Luna.",
+              texto: "Pedirle una lapicera prestada a la chica del sticker de rana.",
               ir: "FINAL_DINAMICO",
               condicion: function () {
                 return !tieneObjeto("lapicera");
@@ -1420,7 +1424,7 @@ La adscripta te agradece y la guarda en una cajita.
 Tu amiga te dice:
 "Bien ahí. Capaz alguien la estaba buscando."
 
-Luna también se suma:
+La chica del sticker de rana también se suma:
 "Si mañana veo algún cartel, te aviso."
 
 Terminás el día con la sensación de haber hecho algo bueno.
@@ -1439,7 +1443,7 @@ FINAL: NUEVO GRUPO
 El día termina mejor de lo esperado.
 
 Tu amiga te incluye en la conversación.
-Luna te saluda al salir.
+La chica del sticker de rana te saluda al salir.
 Alguien pregunta si mañana se sientan en la misma zona.
 
 No fue perfecto, pero estuvo bueno.
@@ -1455,9 +1459,11 @@ Final desbloqueado: nuevo grupo.
                 `
 FINAL: AMISTAD CON LUNA
 
-Cuando termina la clase, Luna se acerca.
+Cuando termina la clase, la chica del sticker de rana se acerca.
 
 "Gracias por ayudarme hoy", dice.
+
+"Por cierto soy Luna"
 
 Te cuenta que también tenía un poco de nervios porque era nueva.
 
@@ -1500,11 +1506,10 @@ FINAL: BATERÍA BAJA
 
 El día termina.
 
-No hiciste todo.
-No hablaste con todo el mundo.
+No hiciste todo lo que podias hacer.
 Pero llegaste hasta el final.
 
-A veces eso ya cuenta como victoria.
+No esta nada mal.
 
 Final desbloqueado: día superado.
 `
@@ -1560,9 +1565,6 @@ El día termina tranquilo.
 
 Hubo momentos buenos, momentos incómodos y decisiones simples.
 
-Nada salió perfecto.
-Pero tampoco tenía que salir perfecto.
-
 Mañana seguís jugando.
 
 Final desbloqueado: continuar.
@@ -1615,7 +1617,7 @@ ${estado.nombre} necesita un descanso.
 
 La creadora aparece y dice:
 
-"Probá otra ruta. Capaz esta vez conviene descansar antes o elegir menos interacciones seguidas, jugador."
+"Probá otra ruta. Capaz esta vez conviene descansar antes o elegir menos interacciones seguidas."
 
 Logros obtenidos: ${textoLogros()}
 `;
