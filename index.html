@@ -1,32 +1,1643 @@
+Sí. Te dejo una versión completa, más natural y más simple. Saqué las frases raras/existenciales y dejé la historia como un juego divertido de primer día de liceo. Luna es una compañera normal, simpática, y el llavero de rana es solo un detalle tierno/divertido.
+
+Guardá esto como **`index.html`**:
+
+```html
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Command Line Adventure</title>
+    <title>Sociabilizar</title>
 
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #050505;
+        color: #00ff66;
+        font-size: 1.15rem;
+        font-family: monospace;
+      }
+
+      .game {
+        width: min(850px, 92vw);
+        padding: 2rem;
+      }
+
+      .title {
+        margin: 0 0 1rem 0;
+        color: #ff4fd8;
+        text-shadow: 0 0 12px #ff4fd8;
+      }
+
+      #sceneIndicator {
+        margin-bottom: 1.5rem;
+        padding: 0.8rem;
+        border: 1px solid #00ff66;
+        color: #b5ffd2;
+        font-size: 0.95rem;
+      }
+
+      #text {
+        white-space: pre-line;
+        line-height: 1.55;
+        margin-bottom: 2rem;
+      }
+
+      form {
+        display: flex;
+        gap: 1rem;
+      }
+
+      input,
+      button {
+        background: #111;
+        color: #00ff66;
+        border: 1px solid #00ff66;
+        font-family: inherit;
+        padding: 0.8rem;
+        font-size: 1rem;
+      }
+
+      input {
+        flex: 1;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:hover,
+      input:focus {
+        outline: none;
+        box-shadow: 0 0 12px #00ff66;
+      }
+
+      #restart {
+        display: none;
+        margin-top: 1rem;
+      }
+    </style>
   </head>
 
   <body>
     <main class="game">
       <pre class="title">
-                 ╔═════════════════════════╗
-                 ║      SOCIABILIZAR       ║
-                 ╚═════════════════════════╝
-    </pre
-      >
+╔════════════════════════════════════╗
+║            SOCIABILIZAR            ║
+║       Primer día, cero calma        ║
+╚════════════════════════════════════╝
+      </pre>
+
       <div id="sceneIndicator"></div>
       <div id="text"></div>
 
       <form id="form">
         <input id="answer" type="text" autocomplete="off" />
-
         <button>Enviar</button>
       </form>
+
       <button id="restart">Reiniciar</button>
     </main>
 
-    <script src="script.js"></script>
+    <script>
+      const text = document.querySelector("#text");
+      const form = document.querySelector("#form");
+      const answer = document.querySelector("#answer");
+      const restart = document.querySelector("#restart");
+      const sceneIndicator = document.querySelector("#sceneIndicator");
+
+      const BATERIA_MAXIMA = 30;
+
+      let estado;
+      let escenaActual;
+
+      function crearEstadoInicial() {
+        return {
+          nombre: "Prota",
+          bateria: 30,
+          plata: 3,
+          amistad: 0,
+          luna: 0,
+          valentia: 0,
+          calma: 0,
+          caos: 0,
+          tarde: false,
+          outfit: "normal",
+          inventario: new Set(),
+          logros: new Set(),
+          aviso: ""
+        };
+      }
+
+      function cambiarBateria(cantidad) {
+        estado.bateria += cantidad;
+
+        if (estado.bateria > BATERIA_MAXIMA) {
+          estado.bateria = BATERIA_MAXIMA;
+        }
+
+        if (estado.bateria < 0) {
+          estado.bateria = 0;
+        }
+      }
+
+      function cambiarPlata(cantidad) {
+        estado.plata += cantidad;
+
+        if (estado.plata < 0) {
+          estado.plata = 0;
+        }
+      }
+
+      function agregarObjeto(objeto) {
+        estado.inventario.add(objeto);
+      }
+
+      function tieneObjeto(objeto) {
+        return estado.inventario.has(objeto);
+      }
+
+      function agregarLogro(logro) {
+        if (!estado.logros.has(logro)) {
+          estado.logros.add(logro);
+          estado.aviso = "Logro desbloqueado: " + logro;
+        }
+      }
+
+      function mostrarAviso(mensaje) {
+        estado.aviso = mensaje;
+      }
+
+      function textoInventario() {
+        if (estado.inventario.size === 0) {
+          return "nada";
+        }
+
+        return Array.from(estado.inventario).join(", ");
+      }
+
+      function textoLogros() {
+        if (estado.logros.size === 0) {
+          return "ninguno";
+        }
+
+        return Array.from(estado.logros).join(", ");
+      }
+
+      function ocultarForm() {
+        form.style.display = "none";
+      }
+
+      function mostrarForm() {
+        form.style.display = "flex";
+        answer.focus();
+      }
+
+      function ocultarRestart() {
+        restart.style.display = "none";
+      }
+
+      function mostrarRestart() {
+        restart.style.display = "block";
+        restart.focus();
+      }
+
+      function opcionesVisibles(escena) {
+        let opciones = typeof escena.opciones === "function" ? escena.opciones() : escena.opciones;
+
+        if (!opciones) {
+          return [];
+        }
+
+        return opciones.filter(function (opcion) {
+          if (!opcion.condicion) {
+            return true;
+          }
+
+          return opcion.condicion();
+        });
+      }
+
+      function irAEscena(nombre) {
+        escenaActual = nombre;
+
+        let escena = escenas[escenaActual];
+
+        if (!escena) {
+          text.textContent = "Error: la escena " + nombre + " no existe.";
+          ocultarForm();
+          mostrarRestart();
+          return;
+        }
+
+        renderizar();
+      }
+
+      function renderizar() {
+        let escena = escenas[escenaActual];
+        let opciones = opcionesVisibles(escena);
+
+        sceneIndicator.textContent =
+          "Escena: " +
+          escenaActual +
+          " | Batería social: " +
+          estado.bateria +
+          "/" +
+          BATERIA_MAXIMA +
+          " | Dinero: $" +
+          estado.plata +
+          " | Inventario: " +
+          textoInventario();
+
+        let contenido = typeof escena.texto === "function" ? escena.texto() : escena.texto;
+
+        if (estado.aviso) {
+          contenido += "\n\n>>> " + estado.aviso + "\n";
+          estado.aviso = "";
+        }
+
+        if (!escena.final && opciones.length > 0) {
+          contenido += "\n\n¿Qué hacés?\n";
+
+          opciones.forEach(function (opcion, index) {
+            contenido += "\n" + (index + 1) + ". " + opcion.texto;
+          });
+
+          contenido += "\n\nEscribí el número de tu decisión.";
+        }
+
+        text.textContent = contenido;
+
+        if (escena.final) {
+          ocultarForm();
+          mostrarRestart();
+        } else {
+          mostrarForm();
+          ocultarRestart();
+        }
+      }
+
+      function procesarOpcion(opcion) {
+        let costo = opcion.costo === undefined ? 1 : opcion.costo;
+
+        cambiarBateria(-costo);
+
+        if (opcion.accion) {
+          let resultado = opcion.accion();
+
+          if (resultado === false) {
+            renderizar();
+            return;
+          }
+        }
+
+        if (estado.bateria <= 0) {
+          irAEscena("BATERIA_AGOTADA");
+          return;
+        }
+
+        if (typeof opcion.ir === "function") {
+          irAEscena(opcion.ir());
+        } else {
+          irAEscena(opcion.ir);
+        }
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        let respuesta = answer.value.trim();
+        answer.value = "";
+
+        let escena = escenas[escenaActual];
+
+        if (escena.respuestaLibre) {
+          escena.respuestaLibre(respuesta);
+          return;
+        }
+
+        let numero = Number(respuesta);
+        let opciones = opcionesVisibles(escena);
+
+        if (!numero || numero < 1 || numero > opciones.length) {
+          mostrarAviso("Esa opción no existe. Escribí el número de una opción disponible.");
+          renderizar();
+          return;
+        }
+
+        procesarOpcion(opciones[numero - 1]);
+      });
+
+      restart.addEventListener("click", function () {
+        inicio();
+      });
+
+      const escenas = {
+        PORTADA: {
+          texto: `
+Bienvenida a SOCIABILIZAR.
+
+Hoy es el primer día de liceo.
+
+La idea es simple:
+tomás decisiones, gastás batería social, conseguís objetos y desbloqueás distintos finales.
+
+Podés hablar con tu amiga, conocer a Luna, comprar algo en la cantina,
+ir al rincón tranquilo o entrar directo a clase.
+
+No hay una sola forma de jugar.
+Cada ruta puede terminar distinto.
+`,
+          opciones: [
+            {
+              texto: "Jugar.",
+              ir: "NOMBRE",
+              costo: 0
+            },
+            {
+              texto: "Ver explicación de la creadora.",
+              ir: "TUTORIAL",
+              costo: 0
+            }
+          ]
+        },
+
+        TUTORIAL: {
+          texto: `
+Aparece la creadora.
+
+Está con capucha negra, tapaboca y lentes oscuros.
+Habla bajito, como si estuviera explicando algo importante, pero sin hacer mucho show.
+
+Creadora:
+"Tu batería social empieza en 30."
+
+"Cada decisión suele gastar 1 punto."
+
+"Algunas opciones te dan amistad, valentía, calma o caos."
+
+"También podés conseguir objetos."
+
+"Algunos objetos abren opciones nuevas."
+
+"Elegí lo que te parezca más divertido."
+
+"Y si sale mal, reiniciás y probás otra ruta."
+`,
+          opciones: [
+            {
+              texto: "Volver al inicio.",
+              ir: "PORTADA",
+              costo: 0
+            }
+          ]
+        },
+
+        NOMBRE: {
+          texto: `
+Antes de empezar, escribí el nombre de tu protagonista.
+
+Puede ser tu nombre, un apodo o cualquier nombre que te guste.
+`,
+          respuestaLibre: function (respuesta) {
+            if (respuesta.length > 0) {
+              estado.nombre = respuesta;
+            }
+
+            irAEscena("CUARTO");
+          }
+        },
+
+        CUARTO: {
+          texto: function () {
+            return `
+Suena la alarma.
+
+${estado.nombre} abre los ojos.
+
+El cuarto está lleno de ropa, cuadernos y cosas que deberían estar en la mochila desde ayer.
+
+Hoy es el primer día de liceo.
+
+Tu amiga te mandó un mensaje:
+
+"Ya estoy nerviosa. Decime que vos también."
+
+La mochila está en una silla.
+El uniforme está cerca.
+El celular sigue vibrando.
+`;
+          },
+          opciones: [
+            {
+              texto: "Levantarte enseguida.",
+              ir: "MOCHILA",
+              accion: function () {
+                estado.valentia += 1;
+              }
+            },
+            {
+              texto: "Posponer la alarma cinco minutos.",
+              ir: "MOCHILA_TARDE",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(2);
+                estado.tarde = true;
+                estado.caos += 1;
+                agregarLogro("Cinco minutos más");
+              }
+            },
+            {
+              texto: "Revisar el celular antes de levantarte.",
+              ir: "CELULAR"
+            },
+            {
+              texto: "Decidir no ir al liceo.",
+              ir: "FINAL_NO_IR",
+              accion: function () {
+                estado.caos += 3;
+              }
+            }
+          ]
+        },
+
+        CELULAR: {
+          texto: `
+Revisás el celular.
+
+Tenés tres cosas nuevas:
+
+1. Un mensaje de tu amiga.
+2. Muchos mensajes en el grupo de clase.
+3. Una historia de una compañera nueva mostrando una mochila con sticker de rana.
+
+Todavía no conocés a la compañera de la rana,
+pero capaz va a tu clase.
+`,
+          opciones: [
+            {
+              texto: "Responderle a tu amiga: 'Sí, yo también estoy nerviosa'.",
+              ir: "MOCHILA",
+              accion: function () {
+                estado.amistad += 2;
+                agregarLogro("Respuesta sincera");
+              }
+            },
+            {
+              texto: "Mirar la historia de la mochila con sticker de rana.",
+              ir: "MOCHILA",
+              accion: function () {
+                estado.luna += 1;
+              }
+            },
+            {
+              texto: "Abrir el grupo de clase.",
+              ir: "MOCHILA_TARDE",
+              accion: function () {
+                estado.tarde = true;
+                estado.caos += 2;
+                mostrarAviso("Había demasiados mensajes. Leíste algunos y cerraste el chat.");
+              }
+            }
+          ]
+        },
+
+        MOCHILA_TARDE: {
+          texto: `
+Te levantás un poco tarde.
+
+Ahora hay que hacer todo rápido.
+
+La mochila está abierta en la silla.
+Hay cuadernos, una lapicera, monedas y algunas cosas sueltas.
+`,
+          opciones: [
+            {
+              texto: "Tirar varias cosas en la mochila sin revisar demasiado.",
+              ir: "OUTFIT",
+              accion: function () {
+                agregarObjeto("objeto misterioso");
+                estado.caos += 2;
+                agregarLogro("Mochila apurada");
+              }
+            },
+            {
+              texto: "Armar la mochila rápido, pero bien.",
+              ir: "OUTFIT",
+              accion: function () {
+                agregarObjeto("cuaderno");
+                agregarObjeto("lapicera");
+                estado.valentia += 1;
+              }
+            },
+            {
+              texto: "Salir con lo primero que encontrás.",
+              ir: "OUTFIT",
+              accion: function () {
+                estado.caos += 2;
+              }
+            }
+          ]
+        },
+
+        MOCHILA: {
+          texto: `
+La mochila está abierta.
+
+Podés guardar varias cosas:
+
+- Cuaderno.
+- Lapicera.
+- Pañuelos.
+- Monedas.
+- Un objeto misterioso que apareció entre tus cosas.
+
+Elegir bien puede servir después.
+`,
+          opciones: [
+            {
+              texto: "Armar la mochila de forma ordenada.",
+              ir: "OUTFIT",
+              accion: function () {
+                agregarObjeto("cuaderno");
+                agregarObjeto("lapicera");
+                agregarObjeto("pañuelos");
+                estado.valentia += 1;
+              }
+            },
+            {
+              texto: "Guardar el objeto misterioso.",
+              ir: "OUTFIT",
+              accion: function () {
+                agregarObjeto("objeto misterioso");
+                estado.caos += 1;
+                agregarLogro("Objeto guardado");
+              }
+            },
+            {
+              texto: "Buscar monedas para la cantina.",
+              ir: "OUTFIT",
+              accion: function () {
+                cambiarPlata(2);
+                agregarObjeto("monedas extra");
+              }
+            },
+            {
+              texto: "Cerrar la mochila y salir.",
+              ir: "OUTFIT"
+            }
+          ]
+        },
+
+        OUTFIT: {
+          texto: `
+Ahora toca elegir qué ponerte.
+
+Querés estar cómoda, pero también sentir que empezás bien el día.
+`,
+          opciones: [
+            {
+              texto: "Ponerte algo cómodo.",
+              ir: "CAMINO",
+              costo: 0,
+              accion: function () {
+                estado.outfit = "cómodo";
+                cambiarBateria(1);
+              }
+            },
+            {
+              texto: "Ponerte algo más llamativo.",
+              ir: "CAMINO",
+              accion: function () {
+                estado.outfit = "llamativo";
+                estado.valentia += 2;
+                agregarLogro("Look elegido");
+              }
+            },
+            {
+              texto: "Ponerte algo discreto.",
+              ir: "CAMINO",
+              costo: 0,
+              accion: function () {
+                estado.outfit = "discreto";
+                cambiarBateria(1);
+              }
+            },
+            {
+              texto: "Ponerte capucha como la creadora.",
+              ir: "CAMINO",
+              accion: function () {
+                estado.outfit = "capucha";
+                estado.caos += 1;
+                agregarLogro("Capucha activada");
+              }
+            }
+          ]
+        },
+
+        CAMINO: {
+          texto: function () {
+            let llegada = estado.tarde
+              ? "Salís un poco tarde, así que caminás más rápido de lo normal."
+              : "Salís con tiempo y caminás tranquila.";
+
+            return `
+${llegada}
+
+Podés ir directo al liceo, pasar por el kiosco o tomar el ómnibus.
+
+Todavía tenés batería social suficiente.
+Por ahora.
+`;
+          },
+          opciones: [
+            {
+              texto: "Caminar directo al liceo.",
+              ir: "ENTRADA",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(1);
+                estado.calma += 1;
+              }
+            },
+            {
+              texto: "Tomar el ómnibus.",
+              ir: "BUS"
+            },
+            {
+              texto: "Pasar por el kiosco.",
+              ir: "KIOSCO"
+            }
+          ]
+        },
+
+        BUS: {
+          texto: `
+Llegás a la parada.
+
+Hay una chica de tu edad mirando el horario.
+
+Te pregunta:
+
+"¿Este va cerca del liceo?"
+
+Parece que ella también está yendo para allá.
+`,
+          opciones: [
+            {
+              texto: "Responderle amablemente.",
+              ir: "ENTRADA",
+              accion: function () {
+                estado.amistad += 1;
+                estado.valentia += 1;
+                agregarLogro("Primer saludo");
+              }
+            },
+            {
+              texto: "Responder rápido porque estás nerviosa.",
+              ir: "ENTRADA",
+              accion: function () {
+                estado.caos += 1;
+              }
+            },
+            {
+              texto: "Sonreír y señalarle el cartel del ómnibus.",
+              ir: "ENTRADA",
+              accion: function () {
+                estado.valentia += 1;
+              }
+            }
+          ]
+        },
+
+        KIOSCO: {
+          texto: function () {
+            return `
+Entrás al kiosco.
+
+Hay alfajores, chicles, jugos y galletitas.
+
+Tenés $${estado.plata}.
+
+El kiosquero pregunta:
+"¿Qué llevás?"
+`;
+          },
+          opciones: [
+            {
+              texto: "Comprar un alfajor. Cuesta $2.",
+              ir: "ENTRADA",
+              accion: function () {
+                if (estado.plata < 2) {
+                  mostrarAviso("No te alcanza para el alfajor.");
+                  return false;
+                }
+
+                cambiarPlata(-2);
+                agregarObjeto("alfajor");
+                agregarLogro("Alfajor comprado");
+              }
+            },
+            {
+              texto: "Comprar chicles para compartir. Cuestan $1.",
+              ir: "ENTRADA",
+              accion: function () {
+                if (estado.plata < 1) {
+                  mostrarAviso("No te alcanza para chicles.");
+                  return false;
+                }
+
+                cambiarPlata(-1);
+                agregarObjeto("chicles");
+                estado.amistad += 1;
+              }
+            },
+            {
+              texto: "No comprar nada.",
+              ir: "ENTRADA",
+              accion: function () {
+                estado.calma += 1;
+              }
+            }
+          ]
+        },
+
+        ENTRADA: {
+          texto: function () {
+            let llegada = estado.tarde
+              ? "Llegás un poco tarde, pero todavía hay gente entrando."
+              : "Llegás al liceo con tiempo.";
+
+            return `
+${llegada}
+
+En el patio ves varias opciones.
+
+Tu amiga está sentada en una mesa con algunas personas.
+
+La cantina ya tiene fila.
+
+También ves a una compañera nueva cerca de una ventana.
+Tiene una mochila con un sticker grande de rana y está buscando algo.
+
+En una esquina hay un rincón tranquilo con menos ruido.
+`;
+          },
+          opciones: [
+            {
+              texto: "Ir con tu amiga.",
+              ir: "AMIGA"
+            },
+            {
+              texto: "Hacer la fila de la cantina.",
+              ir: "CANTINA"
+            },
+            {
+              texto: "Acercarte a la compañera del sticker de rana.",
+              ir: "LUNA"
+            },
+            {
+              texto: "Ir al rincón tranquilo.",
+              ir: "RINCON"
+            },
+            {
+              texto: "Entrar directo a clase.",
+              ir: "CLASE"
+            }
+          ]
+        },
+
+        AMIGA: {
+          texto: `
+Tu amiga te ve y te hace una seña para que vayas.
+
+Está sentada con tres personas que no conocés.
+
+Ella corre un poco la silla y te deja espacio.
+
+No te obliga a hablar enseguida.
+Te acompaña con una sonrisa y sigue la conversación para que puedas sumarte cuando quieras.
+`,
+          opciones: [
+            {
+              texto: "Sentarte al lado de ella.",
+              ir: "PATIO",
+              accion: function () {
+                estado.amistad += 2;
+              }
+            },
+            {
+              texto: "Sentarte un poco apartada y escuchar primero.",
+              ir: "PATIO",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(1);
+                estado.amistad += 1;
+                estado.calma += 1;
+              }
+            },
+            {
+              texto: "Hacer un comentario gracioso para sumarte.",
+              ir: "PATIO",
+              accion: function () {
+                estado.amistad += 3;
+                estado.valentia += 1;
+                agregarLogro("Primer comentario");
+              }
+            },
+            {
+              texto: "Ofrecer chicles al grupo.",
+              ir: "PATIO",
+              condicion: function () {
+                return tieneObjeto("chicles");
+              },
+              accion: function () {
+                estado.amistad += 4;
+                agregarLogro("Chicles compartidos");
+              }
+            }
+          ]
+        },
+
+        CANTINA: {
+          texto: function () {
+            return `
+Vas a la cantina.
+
+La fila avanza lento, pero llega tu turno.
+
+Tenés $${estado.plata}.
+
+La señora de la cantina pregunta:
+"¿Qué vas a querer?"
+`;
+          },
+          opciones: [
+            {
+              texto: "Comprar algo salado. Cuesta $2.",
+              ir: "PATIO",
+              accion: function () {
+                if (estado.plata < 2) {
+                  mostrarAviso("No te alcanza para algo salado.");
+                  return false;
+                }
+
+                cambiarPlata(-2);
+                agregarObjeto("comida salada");
+              }
+            },
+            {
+              texto: "Comprar algo dulce. Cuesta $2.",
+              ir: "PATIO",
+              accion: function () {
+                if (estado.plata < 2) {
+                  mostrarAviso("No te alcanza para algo dulce.");
+                  return false;
+                }
+
+                cambiarPlata(-2);
+                agregarObjeto("comida dulce");
+              }
+            },
+            {
+              texto: "Comprar agua. Cuesta $1.",
+              ir: "PATIO",
+              accion: function () {
+                if (estado.plata < 1) {
+                  mostrarAviso("No te alcanza para agua.");
+                  return false;
+                }
+
+                cambiarPlata(-1);
+                agregarObjeto("agua");
+                cambiarBateria(1);
+              }
+            },
+            {
+              texto: "Preguntar precios antes de elegir.",
+              ir: "CANTINA_PRECIOS"
+            },
+            {
+              texto: "Pedir rapidísimo en modo minijuego.",
+              ir: "MINIJUEGO_CANTINA"
+            }
+          ]
+        },
+
+        CANTINA_PRECIOS: {
+          texto: `
+Preguntás los precios.
+
+La señora te responde tranquila.
+
+Ahora podés elegir mejor.
+`,
+          opciones: [
+            {
+              texto: "Comprar agua.",
+              ir: "PATIO",
+              accion: function () {
+                if (estado.plata < 1) {
+                  mostrarAviso("No te alcanza.");
+                  return false;
+                }
+
+                cambiarPlata(-1);
+                agregarObjeto("agua");
+              }
+            },
+            {
+              texto: "Comprar algo dulce.",
+              ir: "PATIO",
+              accion: function () {
+                if (estado.plata < 2) {
+                  mostrarAviso("No te alcanza.");
+                  return false;
+                }
+
+                cambiarPlata(-2);
+                agregarObjeto("comida dulce");
+              }
+            },
+            {
+              texto: "Guardar la plata y salir de la fila.",
+              ir: "PATIO",
+              accion: function () {
+                estado.calma += 1;
+                agregarLogro("Plata guardada");
+              }
+            }
+          ]
+        },
+
+        MINIJUEGO_CANTINA: {
+          texto: `
+MINIJUEGO: PEDIDO RÁPIDO
+
+Para pedir bien, escribí exactamente:
+
+EMPANADA
+
+Si escribís otra cosa, igual seguís jugando.
+`,
+          respuestaLibre: function (respuesta) {
+            if (respuesta.toUpperCase() === "EMPANADA") {
+              if (estado.plata >= 2) {
+                cambiarPlata(-2);
+                agregarObjeto("empanada");
+                estado.valentia += 3;
+                agregarLogro("Pedido perfecto");
+                irAEscena("PATIO");
+              } else {
+                mostrarAviso("Lo escribiste bien, pero no te alcanzaba la plata.");
+                irAEscena("CANTINA");
+              }
+            } else {
+              cambiarBateria(-5);
+              estado.caos += 2;
+              agregarLogro("Pedido confuso");
+              mostrarAviso("Te trabaste un poco, pero al final pudiste salir de la fila.");
+              irAEscena("PATIO");
+            }
+
+            if (estado.bateria <= 0) {
+              irAEscena("BATERIA_AGOTADA");
+            }
+          }
+        },
+
+        LUNA: {
+          texto: `
+Te acercás a la compañera nueva.
+
+Tiene una mochila con un sticker grande de rana.
+
+Está revisando cerca de su silla y debajo de la mesa.
+
+Cuando te ve, te pregunta:
+
+"Perdón, ¿viste un llavero de rana por acá?
+Creo que se me cayó."
+
+Parece simpática, aunque está un poco apurada buscando.
+`,
+          opciones: [
+            {
+              texto: "Ayudarla a buscar el llavero.",
+              ir: "LUNA_BUSCAR",
+              accion: function () {
+                estado.luna += 2;
+                estado.valentia += 1;
+              }
+            },
+            {
+              texto: "Preguntarle cómo es para poder buscarlo mejor.",
+              ir: "LUNA_BUSCAR",
+              accion: function () {
+                estado.luna += 2;
+                estado.valentia += 1;
+                mostrarAviso("Luna dice que es verde, chiquito y tiene una coronita dorada.");
+              }
+            },
+            {
+              texto: "Decirle: 'Dale, te ayudo'.",
+              ir: "LUNA_BUSCAR",
+              accion: function () {
+                estado.luna += 3;
+                estado.amistad += 1;
+                agregarLogro("Ayuda ofrecida");
+              }
+            },
+            {
+              texto: "Ofrecerle un alfajor para que se calme un poco.",
+              ir: "PATIO",
+              condicion: function () {
+                return tieneObjeto("alfajor");
+              },
+              accion: function () {
+                estado.luna += 3;
+                estado.amistad += 1;
+                agregarLogro("Alfajor compartido");
+              }
+            },
+            {
+              texto: "Decirle que no viste nada, pero que si lo ves le avisás.",
+              ir: "PATIO",
+              accion: function () {
+                estado.luna += 1;
+              }
+            }
+          ]
+        },
+
+        LUNA_BUSCAR: {
+          texto: `
+Ayudás a Luna a buscar.
+
+Miran debajo de una silla.
+Después debajo de la mesa.
+
+Finalmente ves algo verde cerca de la pata de un banco.
+
+Es el llavero de rana.
+
+Luna sonríe aliviada.
+
+"¡Gracias! Me lo regaló mi primo antes de empezar las clases."
+`,
+          opciones: [
+            {
+              texto: "Darle el llavero y decirle que por suerte apareció.",
+              ir: "PATIO",
+              accion: function () {
+                estado.luna += 3;
+                estado.amistad += 1;
+                agregarObjeto("confianza de Luna");
+              }
+            },
+            {
+              texto: "Decir: 'La rana volvió'.",
+              ir: "PATIO",
+              accion: function () {
+                estado.luna += 3;
+                estado.caos += 1;
+                agregarLogro("Rescate de rana");
+              }
+            },
+            {
+              texto: "Preguntarle si también es nueva en el liceo.",
+              ir: "PATIO",
+              accion: function () {
+                estado.luna += 4;
+                estado.amistad += 1;
+                agregarLogro("Nueva amistad");
+              }
+            },
+            {
+              texto: "Mostrarle la pulsera vieja y preguntarle si sabe de quién es.",
+              ir: "PATIO",
+              condicion: function () {
+                return tieneObjeto("pulsera vieja");
+              },
+              accion: function () {
+                estado.luna += 2;
+                estado.calma += 1;
+                mostrarAviso("Luna dice que capaz conviene llevarla a objetos perdidos.");
+              }
+            }
+          ]
+        },
+
+        RINCON: {
+          texto: `
+Te vas a un rincón tranquilo.
+
+Desde ahí podés ver el patio sin estar en el medio.
+
+Tu amiga sigue en la mesa.
+La cantina sigue con fila.
+Luna sigue buscando algo cerca de la ventana.
+
+También ves algo brillante debajo de un banco.
+`,
+          opciones: [
+            {
+              texto: "Descansar un rato.",
+              ir: "PATIO",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(3);
+                estado.calma += 1;
+                agregarLogro("Descanso breve");
+              }
+            },
+            {
+              texto: "Observar un poco antes de decidir.",
+              ir: "PATIO",
+              accion: function () {
+                estado.calma += 1;
+              }
+            },
+            {
+              texto: "Mirar debajo del banco.",
+              ir: "PULSERA"
+            }
+          ]
+        },
+
+        PULSERA: {
+          texto: `
+Te agachás y mirás debajo del banco.
+
+Hay una pulsera vieja.
+
+Puede ser de alguien del liceo.
+Capaz alguien la está buscando.
+`,
+          opciones: [
+            {
+              texto: "Guardarla para llevarla a objetos perdidos.",
+              ir: "PATIO",
+              accion: function () {
+                agregarObjeto("pulsera vieja");
+                estado.valentia += 1;
+                agregarLogro("Pulsera encontrada");
+              }
+            },
+            {
+              texto: "Dejarla donde está.",
+              ir: "PATIO",
+              accion: function () {
+                cambiarBateria(1);
+              }
+            },
+            {
+              texto: "Preguntarle a tu amiga si sabe de quién es.",
+              ir: "AMIGA",
+              accion: function () {
+                agregarObjeto("pulsera vieja");
+                estado.amistad += 1;
+              }
+            },
+            {
+              texto: "Preguntarle a Luna si sabe de quién es.",
+              ir: "LUNA",
+              accion: function () {
+                agregarObjeto("pulsera vieja");
+                estado.luna += 1;
+              }
+            }
+          ]
+        },
+
+        PATIO: {
+          texto: function () {
+            let comentario = "";
+
+            if (estado.bateria <= 8) {
+              comentario = "Tu batería social está baja. Capaz conviene elegir con cuidado.";
+            } else if (estado.bateria >= 24) {
+              comentario = "Todavía tenés bastante batería social.";
+            } else {
+              comentario = "Todavía podés hacer algunas cosas antes de clase.";
+            }
+
+            return `
+El recreo sigue.
+
+${comentario}
+
+Tu amiga está cerca.
+Luna también anda por ahí.
+La cantina sigue abierta.
+El rincón tranquilo sigue disponible.
+`;
+          },
+          opciones: [
+            {
+              texto: "Volver con tu amiga.",
+              ir: "AMIGA"
+            },
+            {
+              texto: "Acercarte a Luna.",
+              ir: "LUNA"
+            },
+            {
+              texto: "Ir a la cantina.",
+              ir: "CANTINA"
+            },
+            {
+              texto: "Ir al rincón tranquilo.",
+              ir: "RINCON"
+            },
+            {
+              texto: "Ir al baño a respirar un poco.",
+              ir: "BANO"
+            },
+            {
+              texto: "Ir a clase.",
+              ir: "CLASE"
+            }
+          ]
+        },
+
+        BANO: {
+          texto: `
+Entrás al baño.
+
+Hay menos ruido.
+
+Te lavás las manos y respirás un momento.
+
+Se siente bien tener unos segundos sin tener que responderle a nadie.
+`,
+          opciones: [
+            {
+              texto: "Lavarte la cara y respirar.",
+              ir: "PATIO",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(3);
+                estado.calma += 1;
+              }
+            },
+            {
+              texto: "Practicar un saludo normal frente al espejo.",
+              ir: "PATIO",
+              accion: function () {
+                estado.valentia += 2;
+                agregarLogro("Saludo practicado");
+              }
+            },
+            {
+              texto: "Ir directo a clase.",
+              ir: "CLASE",
+              accion: function () {
+                estado.valentia += 1;
+              }
+            }
+          ]
+        },
+
+        CLASE: {
+          texto: function () {
+            let lapicera = tieneObjeto("lapicera")
+              ? "Por suerte tenés lapicera."
+              : "Te das cuenta de que capaz no trajiste lapicera.";
+
+            return `
+Suena el timbre.
+
+Entrás a clase.
+
+${lapicera}
+
+La profesora pide que cada persona se presente con:
+
+- Nombre.
+- Algo que le gusta.
+- Una cosa curiosa.
+
+Tu turno se acerca.
+`;
+          },
+          opciones: [
+            {
+              texto: "Presentarte de forma normal.",
+              ir: "FINAL_DINAMICO",
+              accion: function () {
+                estado.valentia += 2;
+                estado.amistad += 1;
+              }
+            },
+            {
+              texto: "Hacer una presentación un poco graciosa.",
+              ir: "FINAL_DINAMICO",
+              accion: function () {
+                estado.valentia += 3;
+                estado.amistad += 2;
+                estado.caos += 1;
+                agregarLogro("Presentación con gracia");
+              }
+            },
+            {
+              texto: "Decir lo mínimo posible.",
+              ir: "FINAL_DINAMICO",
+              costo: 0,
+              accion: function () {
+                cambiarBateria(1);
+                estado.calma += 1;
+              }
+            },
+            {
+              texto: "Usar la pulsera vieja como cosa curiosa.",
+              ir: "FINAL_DINAMICO",
+              condicion: function () {
+                return tieneObjeto("pulsera vieja");
+              },
+              accion: function () {
+                estado.valentia += 2;
+                estado.calma += 1;
+                agregarLogro("Pulsera mencionada");
+              }
+            },
+            {
+              texto: "Pedirle una lapicera prestada a Luna.",
+              ir: "FINAL_DINAMICO",
+              condicion: function () {
+                return !tieneObjeto("lapicera");
+              },
+              accion: function () {
+                estado.luna += 3;
+                estado.valentia += 2;
+                agregarLogro("Lapicera prestada");
+              }
+            }
+          ]
+        },
+
+        FINAL_DINAMICO: {
+          final: true,
+          texto: function () {
+            let puntaje =
+              estado.amistad * 2 +
+              estado.luna * 2 +
+              estado.valentia +
+              estado.calma -
+              estado.caos +
+              Math.floor(estado.bateria / 2);
+
+            let resumen = `
+╔════════════════════════════════════╗
+║              FINAL                 ║
+╚════════════════════════════════════╝
+
+Batería social final: ${estado.bateria}/${BATERIA_MAXIMA}
+Amistad con tu amiga/grupo: ${estado.amistad}
+Amistad con Luna: ${estado.luna}
+Valentía: ${estado.valentia}
+Calma: ${estado.calma}
+Caos: ${estado.caos}
+Inventario: ${textoInventario()}
+Logros: ${textoLogros()}
+
+`;
+
+            if (tieneObjeto("pulsera vieja") && estado.calma >= 3) {
+              return (
+                resumen +
+                `
+FINAL: OBJETOS PERDIDOS
+
+Después de clase llevás la pulsera a objetos perdidos.
+
+La adscripta te agradece y la guarda en una cajita.
+
+Tu amiga te dice:
+"Bien ahí. Capaz alguien la estaba buscando."
+
+Luna también se suma:
+"Si mañana veo algún cartel, te aviso."
+
+Terminás el día con la sensación de haber hecho algo bueno.
+
+Final desbloqueado: buena decisión.
+`
+              );
+            }
+
+            if (estado.amistad >= 7 && estado.luna >= 5) {
+              return (
+                resumen +
+                `
+FINAL: NUEVO GRUPO
+
+El día termina mejor de lo esperado.
+
+Tu amiga te incluye en la conversación.
+Luna te saluda al salir.
+Alguien pregunta si mañana se sientan en la misma zona.
+
+No fue perfecto, pero estuvo bueno.
+
+Final desbloqueado: nuevo grupo.
+`
+              );
+            }
+
+            if (estado.luna >= 7) {
+              return (
+                resumen +
+                `
+FINAL: AMISTAD CON LUNA
+
+Cuando termina la clase, Luna se acerca.
+
+"Gracias por ayudarme hoy", dice.
+
+Te cuenta que también estaba un poco nerviosa porque era nueva.
+
+Después pregunta:
+"¿Mañana te sentás cerca?"
+
+Parece que conseguiste una nueva amiga.
+
+Final desbloqueado: amistad con Luna.
+`
+              );
+            }
+
+            if (estado.amistad >= 8) {
+              return (
+                resumen +
+                `
+FINAL: TU AMIGA TE ACOMPAÑÓ
+
+Al final del día, tu amiga te manda un mensaje:
+
+"Me gustó que vinieras con nosotros."
+
+Después agrega:
+
+"Mañana repetimos."
+
+Terminás el día más tranquila.
+
+Final desbloqueado: amistad reforzada.
+`
+              );
+            }
+
+            if (estado.bateria <= 6) {
+              return (
+                resumen +
+                `
+FINAL: BATERÍA BAJA
+
+El día termina.
+
+No hiciste todo.
+No hablaste con todo el mundo.
+Pero llegaste hasta el final.
+
+A veces eso ya cuenta como victoria.
+
+Final desbloqueado: día superado.
+`
+              );
+            }
+
+            if (estado.caos >= 7) {
+              return (
+                resumen +
+                `
+FINAL: CAOS CON MOCHILA
+
+Tu primer día tuvo de todo:
+
+Decisiones apuradas.
+Una mochila medio improvisada.
+Algún momento incómodo.
+Y varias cosas que no estaban planeadas.
+
+Pero al menos no fue aburrido.
+
+Final desbloqueado: caos controlado.
+`
+              );
+            }
+
+            if (puntaje >= 18) {
+              return (
+                resumen +
+                `
+FINAL: BUEN COMIENZO
+
+El primer día termina bastante bien.
+
+Hablaste un poco.
+Conociste gente.
+Tomaste decisiones.
+Y todavía te queda algo de batería social.
+
+Mañana ya no va a ser tan nuevo.
+
+Final desbloqueado: buen comienzo.
+`
+              );
+            }
+
+            return (
+              resumen +
+              `
+FINAL: PRIMER DÍA NORMAL
+
+El día termina tranquilo.
+
+Hubo momentos buenos, momentos incómodos y decisiones simples.
+
+Nada salió perfecto.
+Pero tampoco tenía que salir perfecto.
+
+Mañana seguís jugando.
+
+Final desbloqueado: continuar.
+`
+            );
+          }
+        },
+
+        FINAL_NO_IR: {
+          final: true,
+          texto: `
+╔════════════════════════════════════╗
+║              FINAL                 ║
+╚════════════════════════════════════╝
+
+Decidiste no ir al liceo.
+
+Al principio parece una buena idea.
+
+Después empiezan los mensajes.
+
+Tu amiga:
+"¿Dónde estás?"
+
+El grupo:
+"Creo que falta alguien."
+
+La adscripta:
+"Buen día. Hay que justificar la inasistencia."
+
+La creadora aparece y dice:
+
+"Bueno. Fue una ruta corta."
+
+Final desbloqueado: ausencia.
+`
+        },
+
+        BATERIA_AGOTADA: {
+          final: true,
+          texto: function () {
+            return `
+╔════════════════════════════════════╗
+║          BATERÍA AGOTADA           ║
+╚════════════════════════════════════╝
+
+La batería social llegó a cero.
+
+${estado.nombre} necesita un descanso.
+
+La creadora aparece y dice:
+
+"Probá otra ruta. Capaz esta vez conviene descansar antes o elegir menos interacciones seguidas."
+
+Logros obtenidos: ${textoLogros()}
+`;
+          }
+        }
+      };
+
+      function inicio() {
+        estado = crearEstadoInicial();
+        irAEscena("PORTADA");
+      }
+
+      inicio();
+      answer.focus();
+    </script>
   </body>
 </html>
+```
+
+Esta versión queda más simple, menos rara y más de juego casual. Luna ya no parece “loca”; solo perdió un llavero importante para ella y la protagonista puede ayudarla.
