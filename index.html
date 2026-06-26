@@ -1,8 +1,3 @@
-Sí. Te dejo una versión completa, más natural y más simple. Saqué las frases raras/existenciales y dejé la historia como un juego divertido de primer día de liceo. Luna es una compañera normal, simpática, y el llavero de rana es solo un detalle tierno/divertido.
-
-Guardá esto como **`index.html`**:
-
-```html
 <!doctype html>
 <html lang="es">
   <head>
@@ -344,7 +339,7 @@ Guardá esto como **`index.html`**:
       const escenas = {
         PORTADA: {
           texto: `
-Bienvenida a SOCIABILIZAR.
+Jugador, entrás a SOCIABILIZAR.
 
 Hoy es el primer día de liceo.
 
@@ -404,7 +399,7 @@ Creadora:
 
         NOMBRE: {
           texto: `
-Antes de empezar, escribí el nombre de tu protagonista.
+Antes de empezar, escribí el nombre de tu personaje.
 
 Puede ser tu nombre, un apodo o cualquier nombre que te guste.
 `,
@@ -430,7 +425,7 @@ Hoy es el primer día de liceo.
 
 Tu amiga te mandó un mensaje:
 
-"Ya estoy nerviosa. Decime que vos también."
+"Ya estoy con nervios. Decime que vos también."
 
 La mochila está en una silla.
 El uniforme está cerca.
@@ -485,7 +480,7 @@ pero capaz va a tu clase.
 `,
           opciones: [
             {
-              texto: "Responderle a tu amiga: 'Sí, yo también estoy nerviosa'.",
+              texto: "Responderle a tu amiga: 'Sí, yo también tengo nervios'.",
               ir: "MOCHILA",
               accion: function () {
                 estado.amistad += 2;
@@ -602,7 +597,7 @@ Elegir bien puede servir después.
           texto: `
 Ahora toca elegir qué ponerte.
 
-Querés estar cómoda, pero también sentir que empezás bien el día.
+Querés sentir comodidad, pero también sentir que empezás bien el día.
 `,
           opciones: [
             {
@@ -648,7 +643,7 @@ Querés estar cómoda, pero también sentir que empezás bien el día.
           texto: function () {
             let llegada = estado.tarde
               ? "Salís un poco tarde, así que caminás más rápido de lo normal."
-              : "Salís con tiempo y caminás tranquila.";
+              : "Salís con tiempo y caminás con calma.";
 
             return `
 ${llegada}
@@ -703,7 +698,7 @@ Parece que ella también está yendo para allá.
               }
             },
             {
-              texto: "Responder rápido porque estás nerviosa.",
+              texto: "Responder rápido porque te da nervios.",
               ir: "ENTRADA",
               accion: function () {
                 estado.caos += 1;
@@ -1464,12 +1459,12 @@ Cuando termina la clase, Luna se acerca.
 
 "Gracias por ayudarme hoy", dice.
 
-Te cuenta que también estaba un poco nerviosa porque era nueva.
+Te cuenta que también tenía un poco de nervios porque era nueva.
 
 Después pregunta:
 "¿Mañana te sentás cerca?"
 
-Parece que conseguiste una nueva amiga.
+Parece que el jugador consiguió una nueva amiga.
 
 Final desbloqueado: amistad con Luna.
 `
@@ -1490,7 +1485,7 @@ Después agrega:
 
 "Mañana repetimos."
 
-Terminás el día más tranquila.
+Terminás el día con más tranquilidad.
 
 Final desbloqueado: amistad reforzada.
 `
@@ -1620,7 +1615,7 @@ ${estado.nombre} necesita un descanso.
 
 La creadora aparece y dice:
 
-"Probá otra ruta. Capaz esta vez conviene descansar antes o elegir menos interacciones seguidas."
+"Probá otra ruta. Capaz esta vez conviene descansar antes o elegir menos interacciones seguidas, jugador."
 
 Logros obtenidos: ${textoLogros()}
 `;
@@ -1638,6 +1633,3 @@ Logros obtenidos: ${textoLogros()}
     </script>
   </body>
 </html>
-```
-
-Esta versión queda más simple, menos rara y más de juego casual. Luna ya no parece “loca”; solo perdió un llavero importante para ella y la protagonista puede ayudarla.
